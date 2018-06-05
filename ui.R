@@ -1,15 +1,18 @@
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
   
+  
   # App title ----
-  titlePanel("Heatmap"),
+  titlePanel("HEATMAP"),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
+
+    
+    
+    
     # Sidebar panel for inputs ----
     sidebarPanel(
-      
-      # Input: Select a file ----
       fileInput("matrix", "Choose Tab delimited .txt File",
                 multiple = FALSE,
                 accept = c("text/tsv",
@@ -18,7 +21,10 @@ ui <- fluidPage(
       
       br(),
       
-      h4("Scaling / Normalization Options"),
+      tabsetPanel(
+        tabPanel("options",
+      
+      h4("Scaling / Normalization"),
       checkboxInput("tmm", "TMM normalize", value = TRUE),
       checkboxInput("log", "log counts", value = TRUE),
       checkboxInput("z_score", "Z - score rows", value = TRUE),
@@ -30,7 +36,7 @@ ui <- fluidPage(
       
       br(),
       
-      h4("Clustering Options"),
+      h4("Clustering"),
       selectInput("dendrogram", h5("Dendrogram"), 
                   choices = list("none", "row", "column", "both"), selected = "both"),
       
@@ -41,7 +47,10 @@ ui <- fluidPage(
       selectInput("hclust_method", h5("Clustering Method"), 
                   choices = list("ward.D", "ward.D2", "single", "complete",
                                  "average", "mcquitty", "median", "centroid"), selected = "ward.D2")
-      
+      ),
+      tabPanel("Columns", h1("summary")),
+      tabPanel("Rows", h1("table"))
+      )
     ),
     
     # Main panel for displaying outputs ----
