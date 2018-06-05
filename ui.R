@@ -1,3 +1,5 @@
+library(plotly)
+
 # Define UI for app that draws a histogram ----
 ui <- fluidPage(
   
@@ -13,7 +15,7 @@ ui <- fluidPage(
     
     # Sidebar panel for inputs ----
     sidebarPanel(
-      fileInput("matrix", "Choose Tab delimited .txt File",
+      fileInput("matrix", "Upload Tab delimited .txt File",
                 multiple = FALSE,
                 accept = c("text/tsv",
                            "text/tab-separated-values,text/plain",
@@ -22,29 +24,28 @@ ui <- fluidPage(
       br(),
       
       tabsetPanel(
-        tabPanel("options",
+        tabPanel("Options",
+          h4("Scaling / Normalization"),
+          checkboxInput("tmm", "TMM normalize", value = TRUE),
+          checkboxInput("log", "log counts", value = TRUE),
+          checkboxInput("z_score", "Z - score rows", value = TRUE),
       
-      h4("Scaling / Normalization"),
-      checkboxInput("tmm", "TMM normalize", value = TRUE),
-      checkboxInput("log", "log counts", value = TRUE),
-      checkboxInput("z_score", "Z - score rows", value = TRUE),
+          br(),
       
-      br(),
+          h4("Gene Name Mapping"),
+          checkboxInput("hugo_names", "HUGO names", value = TRUE),
       
-      h4("Gene Name Mapping"),
-      checkboxInput("hugo_names", "HUGO names", value = TRUE),
+          br(),
       
-      br(),
-      
-      h4("Clustering"),
-      selectInput("dendrogram", h5("Dendrogram"), 
+          h4("Clustering"),
+          selectInput("dendrogram", h5("Dendrogram"), 
                   choices = list("none", "row", "column", "both"), selected = "both"),
       
-      selectInput("dist_method", h5("Distance Method"), 
+          selectInput("dist_method", h5("Distance Method"), 
                   choices = list("euclidean", "maximum", "manhattan", "canberra",
                                  "binary", "minkowski"), selected = "euclidean"),
       
-      selectInput("hclust_method", h5("Clustering Method"), 
+          selectInput("hclust_method", h5("Clustering Method"), 
                   choices = list("ward.D", "ward.D2", "single", "complete",
                                  "average", "mcquitty", "median", "centroid"), selected = "ward.D2")
       ),
