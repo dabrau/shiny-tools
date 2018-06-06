@@ -53,9 +53,7 @@ server <- function(input, output) {
       } else {
         cols <- read_tsv(input$column_list$datapath, col_names = FALSE)[[1]]
         cols <- cols[cols %in% colnames(hm_matrix)]
-        print(cols)
         hm_matrix <- hm_matrix[, cols]
-        print(hm_matrix)
       }
       
       # remove rows with all 0, assumption all values are positive maybe should check explicitly
