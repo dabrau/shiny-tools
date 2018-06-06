@@ -84,7 +84,7 @@ ui <- fluidPage(# App title ----
                         ),
                         fileInput(
                           "column_labels",
-                          "Upload Column Color labels as .txt File",
+                          "Upload Column Color labels as Tab delimited .txt File",
                           multiple = FALSE,
                           accept = c("text/tsv",
                                      "text/tab-separated-values,text/plain",
