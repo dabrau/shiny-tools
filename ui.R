@@ -15,7 +15,7 @@ ui <- fluidPage(
     
     # Sidebar panel for inputs ----
     sidebarPanel(
-      fileInput("matrix", "Upload Tab delimited .txt File",
+      fileInput("matrix", "Upload Matrix as Tab delimited .txt File",
                 multiple = FALSE,
                 accept = c("text/tsv",
                            "text/tab-separated-values,text/plain",
@@ -49,8 +49,18 @@ ui <- fluidPage(
                   choices = list("ward.D", "ward.D2", "single", "complete",
                                  "average", "mcquitty", "median", "centroid"), selected = "ward.D2")
       ),
-      tabPanel("Columns", h1("summary")),
-      tabPanel("Rows", h1("table"))
+      tabPanel("Columns",
+        fileInput("column_list", "Upload Column list as .txt File",
+          multiple = FALSE,
+          accept = c("text/tsv",
+            "text/tab-separated-values,text/plain",
+            ".txt"))),
+      tabPanel("Rows",
+        fileInput("row_list", "Upload Row list as .txt File",
+          multiple = FALSE,
+          accept = c("text/tsv",
+            "text/tab-separated-values,text/plain",
+            ".txt")))
       )
     ),
     
