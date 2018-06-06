@@ -13,8 +13,10 @@ scale_gene_matrix <- function(matrix) {
 }
 
 tmm_norm <- function(counts_matrix) {
-  factors <- calcNormFactors(counts_matrix)
-  counts_matrix * factors
+  dge <- DGEList(counts = counts_matrix)
+  dge <- calcNormFactors(dge, method = "TMM")
+  logCPM <- cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 0.25)
+  logCPM
 }
 
 tsv_to_matrix <- function(path) {
@@ -45,10 +47,10 @@ server <- function(input, output) {
         hm_matrix <- tmm_norm(hm_matrix)
       }
       
-      if(nrow(hm_matrix) > 200) {
-        hm_matrix <- hm_matrix[1:200, ]
+      if(nrow(hm_matrix) > 300) {
+       hm_matrix <- hm_matrix[1:300, ]
       }
-      
+
       if (input$log == TRUE) {
         hm_matrix <- log(hm_matrix + .0001)
       }
@@ -62,13 +64,13 @@ server <- function(input, output) {
   })
   
   output$heatmap <- renderPlotly({
-    heatmaply(
+    plot <- heatmaply(
       heatmap_data(),
       colors = colorRampPalette(c("green", "black", "red"))(80),
       margins = c(200, 200),
       hclust_method = "ward.D2",
       grid_gap = 1,
       branches_lwd = 0.3
-    )
+    ) %>% layout (height = 700)
   })
 }

@@ -27,7 +27,7 @@ ui <- fluidPage(
         tabPanel("Options",
           h4("Scaling / Normalization"),
           checkboxInput("tmm", "TMM normalize", value = TRUE),
-          checkboxInput("log", "log counts", value = TRUE),
+          checkboxInput("log", "log values", value = FALSE),
           checkboxInput("z_score", "Z - score rows", value = TRUE),
       
           br(),
