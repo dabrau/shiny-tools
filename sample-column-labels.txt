@@ -1,0 +1,1 @@
+column	response	groupsample1	responder	controlsample3	responder	controlsample4	responder	mutantsample6	non-responder	mutantsample7	non-responder	mutantsample9	non-responder	mutantsample5	responder	sample8		control

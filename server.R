@@ -153,8 +153,8 @@ server <- function(input, output) {
             if (is.na(label_map[[col]])) {
               "unknown"
             } else label_map[[col]] 
-          } else "uknown"
-        })
+          } else "unknown"
+        }) %>% as.factor
       }) %>% as.data.frame
       
       heatmaply(
