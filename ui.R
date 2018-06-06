@@ -8,6 +8,7 @@ ui <- fluidPage(# App title ----
                 sidebarLayout(
                   # Sidebar panel for inputs ----
                   sidebarPanel(
+                    a(href="https://www.google.com", "Example Matrix"),
                     fileInput(
                       "matrix",
                       "Upload Matrix as Tab delimited .txt File",
@@ -30,6 +31,7 @@ ui <- fluidPage(# App title ----
                         br(),
                         
                         h4("Gene Name Mapping"),
+                        a(href="https://www.google.com", "Ensembl to HUGO"),
                         checkboxInput("hugo_names", "HUGO names", value = TRUE),
                         
                         br(),
@@ -74,6 +76,7 @@ ui <- fluidPage(# App title ----
                       ),
                       tabPanel(
                         "Columns",
+                        a(href="https://www.google.com", "Example Column List"),
                         fileInput(
                           "column_list",
                           "Upload Column list as .txt File",
@@ -82,6 +85,10 @@ ui <- fluidPage(# App title ----
                                      "text/tab-separated-values,text/plain",
                                      ".txt")
                         ),
+                        
+                        br(),
+                        
+                        a(href="https://www.google.com", "Example Column Color Labels"),
                         fileInput(
                           "column_labels",
                           "Upload Column Color labels as Tab delimited .txt File",
@@ -93,6 +100,7 @@ ui <- fluidPage(# App title ----
                       ),
                       tabPanel(
                         "Rows",
+                        a(href="https://www.google.com", "Example Row List"),
                         fileInput(
                           "row_list",
                           "Upload Row list as .txt File",
