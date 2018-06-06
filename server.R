@@ -26,19 +26,27 @@ tsv_to_matrix <- function(path) {
   mat
 }
 
-#stub_data
-# counts_df <- read_tsv("./stub_data.txt")
-# counts_matrix <- as.matrix(counts_df[1:20, 2:ncol(counts_df)])
-# rownames(counts_matrix) <- counts_df$gene_id[1:20]
-# heatmap_data <- counts_matrix %>% tmm_norm %>% scale_gene_matrix
+hugo_mapping <- read_tsv("./ensembl_hugo_mapping.tsv")
+
+ensembl_to_hugo_rownames <- function(hm_matrix) {
+  ensembl_ids <- rownames(hm_matrix)
+  hugo <- hugo_mapping %>% filter(ensembl %in% ensembl_ids)
+  renamed <- hm_matrix[hugo$ensembl, ]
+  rownames(renamed) <- hugo$hugo
+  renamed
+}
+
 
 server <- function(input, output) {
   heatmap_data <- reactive({
     if (!is.null(input$matrix)) {
+      # read in uploaded matrix
       hm_matrix <- tsv_to_matrix(input$matrix$datapath)
+      
+      # remove rows with all 0, assumption all values are positive maybe should check explicitly
       hm_matrix <- hm_matrix[rowSums(hm_matrix) > 0, ]
       
-      
+      # limit number of columns
       if (ncol(hm_matrix) > 20) {
         hm_matrix <- hm_matrix[, 1:20]
       }
@@ -47,8 +55,13 @@ server <- function(input, output) {
         hm_matrix <- tmm_norm(hm_matrix)
       }
       
-      if(nrow(hm_matrix) > 300) {
-       hm_matrix <- hm_matrix[1:300, ]
+      # limit number of rows
+      if (nrow(hm_matrix) > 300) {
+        hm_matrix <- hm_matrix[1:300, ]
+      }
+      
+      if (input$hugo_names) {
+        hm_matrix <- ensembl_to_hugo_rownames(hm_matrix)
       }
 
       if (input$log == TRUE) {
@@ -60,19 +73,37 @@ server <- function(input, output) {
       }
       
       hm_matrix
-    } else matrix(c(c(1,1), c(1,1)), nrow = 2, ncol = 2)
+    } else {
+      
+      # placeholder
+      matrix(c(c(1,1), c(1,1)), nrow = 2, ncol = 2)
+    }
   })
   
   output$heatmap <- renderPlotly({
-    plot <- heatmaply(
+    
+    # prevent reordering when dendrogram is 'none', 'row', or 'column'
+    dendrogram_params <- list("Rowv" = TRUE, "Colv" = TRUE)
+    if (input$dendrogram == "none") {
+      dendrogram_params$Rowv = FALSE
+      dendrogram_params$Colv = FALSE
+    } else if (input$dendrogram == 'row') {
+      dendrogram_params$Colv = FALSE
+    } else if (input$dendrogram == 'column') {
+      dendrogram_params$Rowv = FALSE
+    }
+    
+    hm <- heatmaply(
       heatmap_data(),
       colors = colorRampPalette(c("green", "black", "red"))(80),
       margins = c(200, 200),
+      Rowv = dendrogram_params$Rowv,
+      Colv = dendrogram_params$Colv,
       dendrogram = input$dendrogram,
       dist_method = input$dist_method,
       hclust_method = input$hclust_method,
       grid_gap = 1,
       branches_lwd = 0.3
-    ) %>% layout (height = 800)
+    ) %>% layout(height = 800)
   })
 }
