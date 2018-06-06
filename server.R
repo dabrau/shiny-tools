@@ -5,17 +5,19 @@ library(plotly)
 library(shinyHeatmaply)
 
 scale_gene_matrix <- function(matrix) {
-  t(
-    scale(
-      t(log(matrix[rowSums(matrix) > 0, ] + .0001))
-    )
-  )
+  t(scale(t(log(matrix[rowSums(matrix) > 0,] + .0001))))
 }
 
 tmm_norm <- function(counts_matrix) {
   dge <- DGEList(counts = counts_matrix)
   dge <- calcNormFactors(dge, method = "TMM")
-  logCPM <- cpm(dge, normalized.lib.sizes = TRUE, log = TRUE, prior.count = 0.25)
+  logCPM <-
+    cpm(
+      dge,
+      normalized.lib.sizes = TRUE,
+      log = TRUE,
+      prior.count = 0.25
+    )
   logCPM
 }
 
@@ -31,7 +33,7 @@ hugo_mapping <- read_tsv("./ensembl_hugo_mapping.tsv")
 ensembl_to_hugo_rownames <- function(hm_matrix) {
   ensembl_ids <- rownames(hm_matrix)
   hugo <- hugo_mapping %>% filter(ensembl %in% ensembl_ids)
-  renamed <- hm_matrix[hugo$ensembl, ]
+  renamed <- hm_matrix[hugo$ensembl,]
   rownames(renamed) <- hugo$hugo
   renamed
 }
@@ -43,27 +45,41 @@ server <- function(input, output) {
       # read in uploaded matrix
       hm_matrix <- tsv_to_matrix(input$matrix$datapath)
       
-      # remove rows with all 0, assumption all values are positive maybe should check explicitly
-      hm_matrix <- hm_matrix[rowSums(hm_matrix) > 0, ]
-      
-      # limit number of columns
-      if (ncol(hm_matrix) > 20) {
-        hm_matrix <- hm_matrix[, 1:20]
+      if (is.null(input$column_list)) {
+        # limit number of columns if column list not provided
+        if (ncol(hm_matrix) > 20) {
+          hm_matrix <- hm_matrix[, 1:20]
+        }
+      } else {
+        cols <- read_tsv(input$column_list$datapath, col_names = FALSE)[[1]]
+        cols <- cols[cols %in% colnames(hm_matrix)]
+        print(cols)
+        hm_matrix <- hm_matrix[, cols]
+        print(hm_matrix)
       }
+      
+      # remove rows with all 0, assumption all values are positive maybe should check explicitly
+      hm_matrix <- hm_matrix[rowSums(hm_matrix) > 0,]
       
       if (input$tmm == TRUE) {
         hm_matrix <- tmm_norm(hm_matrix)
       }
       
-      # limit number of rows
-      if (nrow(hm_matrix) > 300) {
-        hm_matrix <- hm_matrix[1:300, ]
-      }
-      
       if (input$hugo_names) {
         hm_matrix <- ensembl_to_hugo_rownames(hm_matrix)
       }
-
+      
+      if (is.null(input$row_list)) {
+        # limit number of rows if row list not provided
+        if (nrow(hm_matrix) > 300) {
+          hm_matrix <- hm_matrix[1:300,]
+        }
+      } else {
+        rows <- read_tsv(input$row_list$datapath, col_names = FALSE)[[1]]
+        rows <- rows[rows %in% rownames(hm_matrix)]
+        hm_matrix <- hm_matrix[rows,]
+      }
+      
       if (input$log == TRUE) {
         hm_matrix <- log(hm_matrix + .0001)
       }
@@ -74,14 +90,12 @@ server <- function(input, output) {
       
       hm_matrix
     } else {
-      
       # placeholder
-      matrix(c(c(1,1), c(1,1)), nrow = 2, ncol = 2)
+      matrix(c(c(1, 1), c(1, 1)), nrow = 2, ncol = 2)
     }
   })
   
   output$heatmap <- renderPlotly({
-    
     # prevent reordering when dendrogram is 'none', 'row', or 'column'
     dendrogram_params <- list("Rowv" = TRUE, "Colv" = TRUE)
     if (input$dendrogram == "none") {
