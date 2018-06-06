@@ -89,8 +89,26 @@ server <- function(input, output) {
       hm_matrix
     } else {
       # placeholder
-      matrix(c(c(1, 1), c(1, 1)), nrow = 2, ncol = 2)
+      placeholder <- matrix(c(c(1, 1), c(1, 1)), nrow = 2, ncol = 2)
+      colnames(placeholder) <- c("item1", "item2")
+      placeholder
     }
+  })
+  
+  column_color_labels <- reactive({
+    if (!is.null(input$column_labels)) {
+      df <- read_tsv(input$column_labels$datapath)
+      
+      colors_map <- list()
+      for (label_group in 2:ncol(df)) {
+        color <- df[[label_group]]
+        names(color) <- df[[1]]
+        colors_map[[colnames(df)[[label_group]]]] <- color
+      }
+      
+      colors_map
+    } else list()
+    
   })
   
   output$heatmap <- renderPlotly({
@@ -105,17 +123,53 @@ server <- function(input, output) {
       dendrogram_params$Rowv = FALSE
     }
     
-    hm <- heatmaply(
-      heatmap_data(),
-      colors = colorRampPalette(c("green", "black", "red"))(80),
-      margins = c(200, 200),
-      Rowv = dendrogram_params$Rowv,
-      Colv = dendrogram_params$Colv,
-      dendrogram = input$dendrogram,
-      dist_method = input$dist_method,
-      hclust_method = input$hclust_method,
-      grid_gap = 1,
-      branches_lwd = 0.3
-    ) %>% layout(height = 800)
+    if (!is.null(input$column_labels)) {
+      
+
+
+    }
+
+   
+    # this is dumb need to build the arguments as a list
+    if (is.null(input$column_labels)) {
+      heatmaply(
+        heatmap_data(),
+        colors = colorRampPalette(c("green", "black", "red"))(80),
+        margins = c(200, 200),
+        Rowv = dendrogram_params$Rowv,
+        Colv = dendrogram_params$Colv,
+        dendrogram = input$dendrogram,
+        dist_method = input$dist_method,
+        hclust_method = input$hclust_method,
+        grid_gap = 1,
+        branches_lwd = 0.3
+      ) %>% layout(height = 800)
+    } else {
+      
+      # generate dataframe for column labels
+      col_labels <- map(column_color_labels(), function(label_map) {
+        map_chr(colnames(heatmap_data()), function(col) {
+          if (col %in% names(label_map)) {
+            if (is.na(label_map[[col]])) {
+              "unknown"
+            } else label_map[[col]] 
+          } else "uknown"
+        })
+      }) %>% as.data.frame
+      
+      heatmaply(
+        heatmap_data(),
+        colors = colorRampPalette(c("green", "black", "red"))(80),
+        margins = c(200, 200),
+        col_side_colors = col_labels,
+        Rowv = dendrogram_params$Rowv,
+        Colv = dendrogram_params$Colv,
+        dendrogram = input$dendrogram,
+        dist_method = input$dist_method,
+        hclust_method = input$hclust_method,
+        grid_gap = 1,
+        branches_lwd = 0.3
+      ) %>% layout(height = 800)
+    }
   })
 }
