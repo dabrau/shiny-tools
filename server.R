@@ -68,9 +68,11 @@ server <- function(input, output) {
       heatmap_data(),
       colors = colorRampPalette(c("green", "black", "red"))(80),
       margins = c(200, 200),
-      hclust_method = "ward.D2",
+      dendrogram = input$dendrogram,
+      dist_method = input$dist_method,
+      hclust_method = input$hclust_method,
       grid_gap = 1,
       branches_lwd = 0.3
-    ) %>% layout (height = 700)
+    ) %>% layout (height = 800)
   })
 }
