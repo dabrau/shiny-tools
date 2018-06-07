@@ -1,0 +1,10 @@
+name: shiny-tools
+title:
+username:
+account: ipi-tools
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 356496
+bundleId: 1415772
+url: https://ipi-tools.shinyapps.io/shiny-tools/
+when: 1528330099.78243
