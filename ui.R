@@ -8,7 +8,7 @@ ui <- fluidPage(# App title ----
                 sidebarLayout(
                   # Sidebar panel for inputs ----
                   sidebarPanel(
-                    a(href="https://www.google.com", "Example Matrix"),
+                    downloadLink("example_matrix", "download matrix example"),
                     fileInput(
                       "matrix",
                       "Upload Matrix as Tab delimited .txt File",
@@ -31,7 +31,7 @@ ui <- fluidPage(# App title ----
                         br(),
                         
                         h4("Gene Name Mapping"),
-                        a(href="https://www.google.com", "Ensembl to HUGO"),
+                        downloadLink("hugo_mapping", "download Ensembl to HUGO reference"),
                         checkboxInput("hugo_names", "HUGO names", value = TRUE),
                         
                         br(),
@@ -76,7 +76,7 @@ ui <- fluidPage(# App title ----
                       ),
                       tabPanel(
                         "Columns",
-                        a(href="https://www.google.com", "Example Column List"),
+                        downloadLink("example_column_list", "download column list example"),
                         fileInput(
                           "column_list",
                           "Upload Column list as .txt File",
@@ -88,7 +88,7 @@ ui <- fluidPage(# App title ----
                         
                         br(),
                         
-                        a(href="https://www.google.com", "Example Column Color Labels"),
+                        downloadLink("example_column_labels", "download column labels example"),
                         fileInput(
                           "column_labels",
                           "Upload Column Color labels as Tab delimited .txt File",
@@ -100,7 +100,7 @@ ui <- fluidPage(# App title ----
                       ),
                       tabPanel(
                         "Rows",
-                        a(href="https://www.google.com", "Example Row List"),
+                        downloadLink("example_row_list", "download row list example"),
                         fileInput(
                           "row_list",
                           "Upload Row list as .txt File",

@@ -28,7 +28,7 @@ tsv_to_matrix <- function(path) {
   mat
 }
 
-hugo_mapping <- read_tsv("./ensembl_hugo_mapping.tsv")
+hugo_mapping <- read_tsv("./ensembl-hugo-mapping.txt")
 
 ensembl_to_hugo_rownames <- function(hm_matrix) {
   ensembl_ids <- rownames(hm_matrix)
@@ -38,8 +38,30 @@ ensembl_to_hugo_rownames <- function(hm_matrix) {
   renamed
 }
 
+# example input files for download
+matrix_example <- read_tsv("./example-inputs/example-counts-matrix.txt")
+column_list_example <- read_tsv("./example-inputs/example-column-list.txt", col_names = FALSE)
+column_labels_example <- read_tsv("./example-inputs/example-column-labels.txt")
+row_list_example <- read_tsv("./example-inputs/example-row-list.txt", col_names = FALSE)
+
+tsv_dl_handler <- function(df, filename, col_names) {
+  downloadHandler(
+    filename = filename,
+    content = function(con) {
+      write_tsv(df, con, col_names = col_names)
+    },
+    contentType = "text/tab-separated-values"
+  )
+}
 
 server <- function(input, output) {
+  output$example_matrix <- tsv_dl_handler(matrix_example, "example-counts-matrix.txt", TRUE)
+  output$example_column_list <- tsv_dl_handler(column_list_example, "example-column-list.txt", FALSE)
+  output$example_column_labels <- tsv_dl_handler(column_labels_example, "example-column-labels.txt", TRUE)
+  output$example_row_list <- tsv_dl_handler(row_list_example, "example-row-list.txt", FALSE)
+  
+  output$hugo_mapping <- tsv_dl_handler(hugo_mapping, "ensembl-hugo-mapping.txt", TRUE)
+  
   heatmap_data <- reactive({
     if (!is.null(input$matrix)) {
       # read in uploaded matrix
@@ -122,13 +144,6 @@ server <- function(input, output) {
     } else if (input$dendrogram == 'column') {
       dendrogram_params$Rowv = FALSE
     }
-    
-    if (!is.null(input$column_labels)) {
-      
-
-
-    }
-
    
     # this is dumb need to build the arguments as a list
     if (is.null(input$column_labels)) {
