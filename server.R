@@ -135,33 +135,30 @@ server <- function(input, output) {
   })
   
   output$heatmap <- renderPlotly({
+    hm_params <- list(
+      x = heatmap_data(),
+      colors = colorRampPalette(c("green", "black", "red"))(80),
+      margins = c(200, 200),
+      Rowv = TRUE,
+      Colv = TRUE,
+      dendrogram = input$dendrogram,
+      dist_method = input$dist_method,
+      hclust_method = input$hclust_method,
+      grid_gap = 1,
+      branches_lwd = 0.3
+    )
+    
     # prevent reordering when dendrogram is 'none', 'row', or 'column'
-    dendrogram_params <- list("Rowv" = TRUE, "Colv" = TRUE)
     if (input$dendrogram == "none") {
-      dendrogram_params$Rowv = FALSE
-      dendrogram_params$Colv = FALSE
+      hm_params$Rowv = FALSE
+      hm_params$Colv = FALSE
     } else if (input$dendrogram == 'row') {
-      dendrogram_params$Colv = FALSE
+      hm_params$Colv = FALSE
     } else if (input$dendrogram == 'column') {
-      dendrogram_params$Rowv = FALSE
+      hm_params$Rowv = FALSE
     }
-   
-    # this is dumb need to build the arguments as a list
-    if (is.null(input$column_labels)) {
-      heatmaply(
-        heatmap_data(),
-        colors = colorRampPalette(c("green", "black", "red"))(80),
-        margins = c(200, 200),
-        Rowv = dendrogram_params$Rowv,
-        Colv = dendrogram_params$Colv,
-        dendrogram = input$dendrogram,
-        dist_method = input$dist_method,
-        hclust_method = input$hclust_method,
-        grid_gap = 1,
-        branches_lwd = 0.3
-      ) %>% layout(height = 800)
-    } else {
-      
+    
+    if (!is.null(input$column_labels)) {
       # generate dataframe for column labels
       col_labels <- map(column_color_labels(), function(label_map) {
         map_chr(colnames(heatmap_data()), function(col) {
@@ -173,19 +170,9 @@ server <- function(input, output) {
         }) %>% as.factor
       }) %>% as.data.frame
       
-      heatmaply(
-        heatmap_data(),
-        colors = colorRampPalette(c("green", "black", "red"))(80),
-        margins = c(200, 200),
-        col_side_colors = col_labels,
-        Rowv = dendrogram_params$Rowv,
-        Colv = dendrogram_params$Colv,
-        dendrogram = input$dendrogram,
-        dist_method = input$dist_method,
-        hclust_method = input$hclust_method,
-        grid_gap = 1,
-        branches_lwd = 0.3
-      ) %>% layout(height = 800)
+      hm_params$col_side_colors = col_labels
     }
+    
+    do.call(heatmaply, hm_params) %>% layout(height = 800)
   })
 }
