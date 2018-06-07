@@ -78,8 +78,9 @@ server <- function(input, output) {
         hm_matrix <- hm_matrix[, cols]
       }
       
-      # remove rows with all 0, assumption all values are positive maybe should check explicitly
-      hm_matrix <- hm_matrix[rowSums(hm_matrix) > 0,]
+      # remove rows with all 0
+      rows <- apply(hm_matrix, 1, function(row) sum(row != 0) != 0)
+      hm_matrix <- hm_matrix[rows, ]
       
       if (input$tmm == TRUE) {
         hm_matrix <- tmm_norm(hm_matrix)
