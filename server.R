@@ -69,8 +69,8 @@ server <- function(input, output) {
       
       if (is.null(input$column_list)) {
         # limit number of columns if column list not provided
-        if (ncol(hm_matrix) > 20) {
-          hm_matrix <- hm_matrix[, 1:20]
+        if (ncol(hm_matrix) > 30) {
+          hm_matrix <- hm_matrix[, 1:30]
         }
       } else {
         cols <- read_tsv(input$column_list$datapath, col_names = FALSE)[[1]]
