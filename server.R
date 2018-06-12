@@ -40,9 +40,7 @@ ensembl_to_hugo_rownames <- function(hm_matrix) {
 
 # example input files for download
 matrix_example <- read_tsv("./example-inputs/example-counts-matrix.txt")
-column_list_example <- read_tsv("./example-inputs/example-column-list.txt", col_names = FALSE)
 column_labels_example <- read_tsv("./example-inputs/example-column-labels.txt")
-row_list_example <- read_tsv("./example-inputs/example-row-list.txt", col_names = FALSE)
 
 tsv_dl_handler <- function(df, filename, col_names) {
   downloadHandler(
@@ -55,17 +53,17 @@ tsv_dl_handler <- function(df, filename, col_names) {
 }
 
 server <- function(input, output) {
-  output$example_matrix <- tsv_dl_handler(matrix_example, "example-counts-matrix.txt", TRUE)
-  output$example_column_list <- tsv_dl_handler(column_list_example, "example-column-list.txt", FALSE)
-  output$example_column_labels <- tsv_dl_handler(column_labels_example, "example-column-labels.txt", TRUE)
-  output$example_row_list <- tsv_dl_handler(row_list_example, "example-row-list.txt", FALSE)
-  
-  output$hugo_mapping <- tsv_dl_handler(hugo_mapping, "ensembl-hugo-mapping.txt", TRUE)
-  
   heatmap_data <- reactive({
+    # placeholder
+    hm_matrix <- matrix(c(c(1, 1), c(1, 1)), nrow = 2, ncol = 2)
+    colnames(hm_matrix) <- c("item1", "item2")
+    all_rows <- data.frame(rows = rownames(hm_matrix))
+    all_columns <- data.frame(columns = colnames(hm_matrix))
+    
     if (!is.null(input$matrix)) {
       # read in uploaded matrix
       hm_matrix <- tsv_to_matrix(input$matrix$datapath)
+      all_columns <- data.frame(columns = colnames(hm_matrix))
       
       if (is.null(input$column_list)) {
         # limit number of columns if column list not provided
@@ -81,6 +79,7 @@ server <- function(input, output) {
       # remove rows with all 0
       rows <- apply(hm_matrix, 1, function(row) sum(row != 0) != 0)
       hm_matrix <- hm_matrix[rows, ]
+      all_rows <- data.frame(rows = rownames(hm_matrix))
       
       if (input$tmm == TRUE) {
         hm_matrix <- tmm_norm(hm_matrix)
@@ -88,6 +87,7 @@ server <- function(input, output) {
       
       if (input$hugo_names) {
         hm_matrix <- ensembl_to_hugo_rownames(hm_matrix)
+        all_rows <- data.frame(rows = rownames(hm_matrix))
       }
       
       if (is.null(input$row_list)) {
@@ -99,6 +99,7 @@ server <- function(input, output) {
         rows <- read_tsv(input$row_list$datapath, col_names = FALSE)[[1]]
         rows <- rows[rows %in% rownames(hm_matrix)]
         hm_matrix <- hm_matrix[rows,]
+        missing_rows <- rows[!(rows %in% rownames(hm_matrix))]
       }
       
       if (input$log == TRUE) {
@@ -110,12 +111,13 @@ server <- function(input, output) {
       }
       
       hm_matrix
-    } else {
-      # placeholder
-      placeholder <- matrix(c(c(1, 1), c(1, 1)), nrow = 2, ncol = 2)
-      colnames(placeholder) <- c("item1", "item2")
-      placeholder
     }
+    
+    list(
+      hm_matrix = hm_matrix,
+      all_rows = all_rows %>% arrange(rows),
+      all_columns = all_columns %>% arrange(columns)
+    )
   })
   
   column_color_labels <- reactive({
@@ -134,9 +136,15 @@ server <- function(input, output) {
     
   })
   
+  output$example_matrix <- tsv_dl_handler(matrix_example, "example-counts-matrix.txt", TRUE)
+  output$all_columns_list <- tsv_dl_handler(heatmap_data()$all_columns, "all-columns-list.txt", FALSE)
+  output$example_column_labels <- tsv_dl_handler(column_labels_example, "example-column-labels.txt", TRUE)
+  output$all_rows_list <- tsv_dl_handler(heatmap_data()$all_rows, "all-rows-list.txt", FALSE)
+  output$hugo_mapping <- tsv_dl_handler(hugo_mapping, "ensembl-hugo-mapping.txt", TRUE)
+  
   output$heatmap <- renderPlotly({
     hm_params <- list(
-      x = heatmap_data(),
+      x = heatmap_data()$hm_matrix,
       colors = colorRampPalette(c("green", "black", "red"))(80),
       margins = c(200, 200),
       Rowv = TRUE,
@@ -175,4 +183,13 @@ server <- function(input, output) {
     
     do.call(heatmaply, hm_params) %>% layout(height = 800)
   })
+
+  output$download_hm_matrix <- downloadHandler("heatmap-matrix.txt",
+    content = function(con) {
+      heatmap_data()$hm_matrix %>%
+        as.data.frame %>%
+        rownames_to_column("row_id") %>%
+        write_tsv(con)
+    }
+  )
 }

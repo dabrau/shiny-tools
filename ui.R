@@ -1,6 +1,5 @@
 library(plotly)
 
-# Define UI for app that draws a histogram ----
 ui <- fluidPage(# App title ----
                 titlePanel("HEATMAP"),
                 
@@ -76,7 +75,7 @@ ui <- fluidPage(# App title ----
                       ),
                       tabPanel(
                         "Columns",
-                        downloadLink("example_column_list", "download column list example"),
+                        downloadLink("all_columns_list", "download list of all columns"),
                         fileInput(
                           "column_list",
                           "Upload Column list as .txt File",
@@ -100,7 +99,7 @@ ui <- fluidPage(# App title ----
                       ),
                       tabPanel(
                         "Rows",
-                        downloadLink("example_row_list", "download row list example"),
+                        downloadLink("all_rows_list", "download list of all rows"),
                         fileInput(
                           "row_list",
                           "Upload Row list as .txt File",
@@ -114,6 +113,7 @@ ui <- fluidPage(# App title ----
                   ),
                   
                   # Main panel for displaying outputs ----
-                  mainPanel(# Output: Histogram ----
-                            plotlyOutput(outputId = "heatmap"))
+                  mainPanel(# Output: Heatmap
+                    downloadButton("download_hm_matrix", label = "Download Heatmap Matrix"),
+                    plotlyOutput(outputId = "heatmap"))
                 ))
