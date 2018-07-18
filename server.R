@@ -4,6 +4,8 @@ library(RColorBrewer)
 library(plotly)
 library(shinyHeatmaply)
 
+options(shiny.maxRequestSize=30*1024^2) 
+
 scale_gene_matrix <- function(matrix) {
   t(scale(t(log(matrix[rowSums(matrix) > 0,] + .0001))))
 }
