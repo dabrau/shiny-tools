@@ -3,6 +3,7 @@ library(edgeR)
 library(RColorBrewer)
 library(plotly)
 library(shinyHeatmaply)
+library(scales)
 
 options(shiny.maxRequestSize=30*1024^2) 
 
@@ -157,6 +158,12 @@ server <- function(input, output) {
       grid_gap = 1,
       branches_lwd = 0.3
     )
+    
+    # add color breaks for z_scored values
+    if (input$z_score == TRUE) {
+      gradient <- ggplot2::scale_fill_gradient2(low = "green", mid = "black", high = "red", limits = c(-2, 2), oob = squish)
+      hm_params$scale_fill_gradient_fun = gradient
+    }
     
     # prevent reordering when dendrogram is 'none', 'row', or 'column'
     if (input$dendrogram == "none") {
