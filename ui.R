@@ -23,15 +23,15 @@ ui <- fluidPage(# App title ----
                       tabPanel(
                         "Options",
                         h4("Scaling / Normalization"),
-                        checkboxInput("tmm", "TMM normalize", value = TRUE),
+                        checkboxInput("tmm", "TMM normalize", value = FALSE),
                         checkboxInput("log", "log values", value = FALSE),
-                        checkboxInput("z_score", "Z - score rows", value = TRUE),
+                        checkboxInput("z_score", "Z - score rows", value = FALSE),
                         
                         br(),
                         
                         h4("Gene Name Mapping"),
                         downloadLink("hugo_mapping", "download Ensembl to HUGO reference"),
-                        checkboxInput("hugo_names", "HUGO names", value = TRUE),
+                        checkboxInput("hugo_names", "HUGO names", value = FALSE),
                         
                         br(),
                         
