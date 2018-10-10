@@ -3,5 +3,5 @@ setwd("~/Projects/shiny_tools")
 source("./server.R")
 source("./ui.R")
 
-# See above for the definitions of ui and server
+# options(repos = BiocInstaller::biocinstallRepos())
 shinyApp(ui = ui, server = server)
