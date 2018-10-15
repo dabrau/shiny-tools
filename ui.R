@@ -1,6 +1,38 @@
 library(plotly)
+library(colourpicker)
 
-ui <- fluidPage(# App title ----
+ui <- fluidPage(
+                tags$head(
+                  tags$style(HTML("
+
+                  .matrix-col {
+                    height: 40px;
+                    display: flex;
+                    margin-top: 5px;
+                    border-bottom: 1px ridge #eee;
+                  }
+
+                  .matrix-col > div:first-child {
+                    flex-grow: 1;
+                  }
+                  
+                  .matrix-col > div:nth-child(2) {
+                    max-width: 90px;
+                  }
+
+                  .matrix-col > .checkbox {
+                    margin-top: 26px;
+                  }
+
+                  .matrix-col > div:nth-child(2) > .colourpicker {
+                    position: relative;
+                    bottom: 20px;
+                  }
+              
+                  "))
+                ),
+  
+                # App title ----
                 titlePanel("HEATMAP"),
                 
                 # Sidebar layout with input and output definitions ----
@@ -75,39 +107,29 @@ ui <- fluidPage(# App title ----
                       ),
                       tabPanel(
                         "Columns",
-                        downloadLink("all_columns_list", "download list of all columns"),
-                        fileInput(
-                          "column_list",
-                          "Upload Column list as .txt File",
-                          multiple = FALSE,
-                          accept = c("text/tsv",
-                                     "text/tab-separated-values,text/plain",
-                                     ".txt")
-                        ),
-                        
-                        br(),
-                        
-                        downloadLink("example_column_labels", "download column labels example"),
-                        fileInput(
-                          "column_labels",
-                          "Upload Column Color labels as Tab delimited .txt File",
-                          multiple = FALSE,
-                          accept = c("text/tsv",
-                                     "text/tab-separated-values,text/plain",
-                                     ".txt")
-                        )
+                        # downloadLink("all_columns_list", "download list of all columns"),
+                        # fileInput(
+                        #   "column_list",
+                        #   "Upload Column list as .txt File",
+                        #   multiple = FALSE,
+                        #   accept = c("text/tsv",
+                        #              "text/tab-separated-values,text/plain",
+                        #              ".txt")
+                        # ),
+                        uiOutput("col_checkbox")
                       ),
                       tabPanel(
                         "Rows",
-                        downloadLink("all_rows_list", "download list of all rows"),
-                        fileInput(
-                          "row_list",
-                          "Upload Row list as .txt File",
-                          multiple = FALSE,
-                          accept = c("text/tsv",
-                                     "text/tab-separated-values,text/plain",
-                                     ".txt")
-                        )
+                        # downloadLink("all_rows_list", "download list of all rows"),
+                        # fileInput(
+                        #   "row_list",
+                        #   "Upload Row list as .txt File",
+                        #   multiple = FALSE,
+                        #   accept = c("text/tsv",
+                        #              "text/tab-separated-values,text/plain",
+                        #              ".txt")
+                        # ),
+                        uiOutput("row_checkbox")
                       )
                     )
                   ),

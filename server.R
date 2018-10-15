@@ -26,6 +26,19 @@ tmm_norm <- function(counts_matrix) {
 
 tsv_to_matrix <- function(path) {
   df <- read_tsv(path)
+  
+  #remove empty columns
+  cols_to_keep <- map_lgl(colnames(df), function(col_name) {
+    sum(is.na(df[[col_name]])) != nrow(df)
+  })
+  
+  #remove empty rows
+  rows_to_keep <- map_lgl(rownames(df), function(row_name) {
+    sum(is.na(df[row_name, ])) != ncol(df)
+  })
+  
+  df <- df[rows_to_keep, cols_to_keep]
+  
   mat <- as.matrix(df[, 2:ncol(df)])
   rownames(mat) <- df[[1]]
   mat
@@ -35,15 +48,17 @@ hugo_mapping <- read_tsv("./ensembl-hugo-mapping.txt")
 
 ensembl_to_hugo_rownames <- function(hm_matrix) {
   ensembl_ids <- rownames(hm_matrix)
-  hugo <- hugo_mapping %>% filter(ensembl %in% ensembl_ids)
-  renamed <- hm_matrix[hugo$ensembl,]
-  rownames(renamed) <- hugo$hugo
-  renamed
+  labels <- map_chr(ensembl_ids, function(id) {
+    name <- hugo_mapping %>% filter(ensembl == id) %>% dplyr::select(hugo) %>% unlist
+    if (length(name) == 0) { id } else { name[1] }
+  })
+  
+  rownames(hm_matrix) <- labels
+  hm_matrix
 }
 
 # example input files for download
 matrix_example <- read_tsv("./example-inputs/example-counts-matrix.txt")
-column_labels_example <- read_tsv("./example-inputs/example-column-labels.txt")
 
 tsv_dl_handler <- function(df, filename, col_names) {
   downloadHandler(
@@ -56,98 +71,120 @@ tsv_dl_handler <- function(df, filename, col_names) {
 }
 
 server <- function(input, output) {
-  heatmap_data <- reactive({
-    # placeholder
-    hm_matrix <- matrix(c(c(1, 1), c(1, 1)), nrow = 2, ncol = 2)
-    colnames(hm_matrix) <- c("item1", "item2")
-    all_rows <- data.frame(rows = rownames(hm_matrix))
-    all_columns <- data.frame(columns = colnames(hm_matrix))
+  hm_matrix <- reactive({
     
     if (!is.null(input$matrix)) {
-      # read in uploaded matrix
-      hm_matrix <- tsv_to_matrix(input$matrix$datapath)
-      all_columns <- data.frame(columns = colnames(hm_matrix))
-      
-      if (is.null(input$column_list)) {
-        # limit number of columns if column list not provided
-        if (ncol(hm_matrix) > 30) {
-          hm_matrix <- hm_matrix[, 1:30]
-        }
-      } else {
-        cols <- read_tsv(input$column_list$datapath, col_names = FALSE)[[1]]
-        cols <- cols[cols %in% colnames(hm_matrix)]
-        hm_matrix <- hm_matrix[, cols]
-      }
-      
+      mat <- tsv_to_matrix(input$matrix$datapath)
       # remove rows with all 0
-      rows <- apply(hm_matrix, 1, function(row) sum(row != 0) != 0)
-      hm_matrix <- hm_matrix[rows, ]
-      all_rows <- data.frame(rows = rownames(hm_matrix))
-      
-      if (input$tmm == TRUE) {
-        hm_matrix <- tmm_norm(hm_matrix)
-      }
-      
-      if (input$hugo_names) {
-        hm_matrix <- ensembl_to_hugo_rownames(hm_matrix)
-        all_rows <- data.frame(rows = rownames(hm_matrix))
-      }
-      
-      if (is.null(input$row_list)) {
-        # limit number of rows if row list not provided
-        if (nrow(hm_matrix) > 300) {
-          hm_matrix <- hm_matrix[1:300,]
-        }
-      } else {
-        rows <- read_tsv(input$row_list$datapath, col_names = FALSE)[[1]]
-        rows <- rows[rows %in% rownames(hm_matrix)]
-        hm_matrix <- hm_matrix[rows,]
-        missing_rows <- rows[!(rows %in% rownames(hm_matrix))]
-      }
-      
-      if (input$log == TRUE) {
-        hm_matrix <- log(hm_matrix + .0001)
-      }
-      
-      if (input$z_score == TRUE) {
-        hm_matrix <- t(scale(t(hm_matrix)))
-      }
-      
-      hm_matrix
+      rows <- apply(mat, 1, function(row) sum(row != 0) != 0)
+      mat <- mat[rows, ]
+    } else {
+      # placeholder
+      mat <- matrix(c(c(1, 1), c(1, 1)), nrow = 2, ncol = 2)
+      colnames(mat) <- c("item1", "item2")
     }
     
-    list(
-      hm_matrix = hm_matrix,
-      all_rows = all_rows %>% arrange(rows),
-      all_columns = all_columns %>% arrange(columns)
-    )
+    mat
   })
   
-  column_color_labels <- reactive({
-    if (!is.null(input$column_labels)) {
-      df <- read_tsv(input$column_labels$datapath)
-      
-      colors_map <- list()
-      for (label_group in 2:ncol(df)) {
-        color <- df[[label_group]]
-        names(color) <- df[[1]]
-        colors_map[[colnames(df)[[label_group]]]] <- color
-      }
-      
-      colors_map
-    } else list()
+  
+  default_color <- "#63B8FF"
+  output$col_checkbox <- renderUI({
+    choice <-  unique(colnames(hm_matrix()))
+    cols <- lapply(choice, FUN = function(col_name) {
+      tags$div(class = "matrix-col",
+               checkboxInput(paste("column", col_name, sep = "_"), col_name, TRUE),
+               colourInput(paste("color", col_name, sep = "_"), "", value = default_color,
+                           allowedCols = c(default_color, "#1E90FF", "#FFFFFF"),
+                           palette = "limited")
+      )
+    })
     
+    do.call(tags$div, cols)
+  })
+  
+  output$row_checkbox <- renderUI({
+    mat <- hm_matrix()
+    if (input$hugo_names) {
+      mat <- ensembl_to_hugo_rownames(hm_matrix())
+    }
+    choice <-  unique(rownames(mat))
+    checkboxGroupInput("row_checkbox","", choices = choice, selected = choice)
+  })
+  
+  columns <- reactive({
+    col_inputs <- names(input)[str_detect(names(input), "column_")]
+    col_names <- str_sub(col_inputs, start = 8)
+    values <- map_lgl(col_inputs, function(inp) input[[inp]])
+    col_names[values]
+  })
+
+  heatmap_data <- reactive({
+    hm_mat <- hm_matrix()
+    #row and column selectors
+    if (!is.null(input$row_checkbox)) {
+      hm_mat <- hm_mat[rownames(hm_mat) %in% input$row_checkbox, ]
+    }
+    
+    if (length(columns()) != 0) {
+      hm_mat <- hm_mat[, colnames(hm_mat) %in% columns()]
+    }
+    
+    if (input$tmm == TRUE) {
+      hm_matrix <- tmm_norm(hm_mat)
+    }
+    
+    if (input$hugo_names) {
+      hm_mat <- ensembl_to_hugo_rownames(hm_mat)
+    }
+    
+    if (input$log == TRUE) {
+      hm_mat <- log(hm_mat + .0001)
+    }
+    
+    if (input$z_score == TRUE) {
+      hm_mat <- t(scale(t(hm_mat)))
+    }
+    
+    hm_mat
+  })
+  
+  col_colors <- reactive({
+    col_inputs <- names(input)[str_detect(names(input), "color_")]
+    col_labels <- rep(0, ncol(heatmap_data()))
+    
+    
+    #heatmaply col_side_colors doesn't work
+    #hack with 2 colors and no color
+    if (length(col_inputs) > 0) {
+      col_names <- str_sub(col_inputs, start = 7)
+      colors <- map_chr(col_inputs, function(inp) input[[inp]])
+      names(colors) <- col_names
+      col_labels <- map_dbl(colnames(heatmap_data()), function(col) {
+        if (col %in% names(colors)) {
+          if (colors[[col]] == "#1E90FF") {
+            return(1)
+          }
+          
+          if (colors[[col]] == "#FFFFFF") {
+            return(NA)
+          }
+        }
+        
+        return(0)
+      })
+    }
+
+    col_labels
   })
   
   output$example_matrix <- tsv_dl_handler(matrix_example, "example-counts-matrix.txt", TRUE)
-  output$all_columns_list <- tsv_dl_handler(heatmap_data()$all_columns, "all-columns-list.txt", FALSE)
-  output$example_column_labels <- tsv_dl_handler(column_labels_example, "example-column-labels.txt", TRUE)
-  output$all_rows_list <- tsv_dl_handler(heatmap_data()$all_rows, "all-rows-list.txt", FALSE)
   output$hugo_mapping <- tsv_dl_handler(hugo_mapping, "ensembl-hugo-mapping.txt", TRUE)
   
   output$heatmap <- renderPlotly({
+
     hm_params <- list(
-      x = heatmap_data()$hm_matrix,
+      x = heatmap_data(),
       colors = colorRampPalette(c("green", "black", "red"))(80),
       margins = c(200, 200),
       Rowv = TRUE,
@@ -156,7 +193,8 @@ server <- function(input, output) {
       dist_method = input$dist_method,
       hclust_method = input$hclust_method,
       grid_gap = 1,
-      branches_lwd = 0.3
+      branches_lwd = 0.3,
+      col_side_colors = col_colors()
     )
     
     # add color breaks for z_scored values
@@ -175,27 +213,12 @@ server <- function(input, output) {
       hm_params$Rowv = FALSE
     }
     
-    if (!is.null(input$column_labels)) {
-      # generate dataframe for column labels
-      col_labels <- map(column_color_labels(), function(label_map) {
-        map_chr(colnames(heatmap_data()), function(col) {
-          if (col %in% names(label_map)) {
-            if (is.na(label_map[[col]])) {
-              "unknown"
-            } else label_map[[col]] 
-          } else "unknown"
-        }) %>% as.factor
-      }) %>% as.data.frame
-      
-      hm_params$col_side_colors = col_labels
-    }
-    
     do.call(heatmaply, hm_params) %>% layout(height = 800)
   })
 
   output$download_hm_matrix <- downloadHandler("heatmap-matrix.txt",
     content = function(con) {
-      heatmap_data()$hm_matrix %>%
+      heatmap_data() %>%
         as.data.frame %>%
         rownames_to_column("row_id") %>%
         write_tsv(con)
