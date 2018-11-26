@@ -5,6 +5,6 @@ account: ipi-tools
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 356496
-bundleId: 1417209
+bundleId: 1635517
 url: https://ipi-tools.shinyapps.io/shiny-tools/
-when: 1528392173.79206
+when: 1539206442.13653
